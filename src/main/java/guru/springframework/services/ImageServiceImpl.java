@@ -1,34 +1,43 @@
 package guru.springframework.services;
 
 import guru.springframework.domain.Recipe;
-import guru.springframework.repositores.RecipeRepository;
+import guru.springframework.repositores.reactive.RecipeReactiveRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import reactor.core.publisher.Mono;
 
 @Service
 public class ImageServiceImpl implements ImageService {
-    private final RecipeRepository recipeRepository;
+    private final RecipeReactiveRepository recipeRepository;
 
-    public ImageServiceImpl(RecipeRepository recipeRepository) {
+    public ImageServiceImpl(RecipeReactiveRepository recipeRepository) {
         this.recipeRepository = recipeRepository;
     }
 
+    @Transactional
     @Override
-    public void saveImageFile(String id, MultipartFile file) {
+    public Mono<Void> saveImageFile(String id, MultipartFile file) {
+        System.out.println("file received!");
+        Mono<Recipe> recipeMono =  recipeRepository.findById(id)
+                .map(recipe -> {
+                    try {
+                        Byte[] bytes = new Byte[file.getBytes().length];
+                        System.out.println("Bytes: " + file.getBytes().length);
+                        int i = 0;
+                        for (byte b : file.getBytes()) {
+                            bytes[i++] = b;
+                        }
 
-       try {
-           System.out.println("file received!");
-           Recipe recipe = recipeRepository.findById(id).get();
-           Byte[] bytes = new Byte[file.getBytes().length];
-           int i = 0;
-           for (byte b : file.getBytes()) {
-               bytes[i++] = b;
-           }
+                        recipe.setImage(bytes);
+                        return recipe;
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                        throw  new RuntimeException(e);
+                    }
+                });
+                recipeRepository.save(recipeMono.block());
+            return Mono.empty();
 
-           recipe.setImage(bytes);
-           recipeRepository.save(recipe);
-       }catch (Exception e){
-           e.printStackTrace();
-       }
     }
 }

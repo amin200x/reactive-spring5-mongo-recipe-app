@@ -15,7 +15,7 @@ public class Ingredient {
     private String description;
     private BigDecimal amount;
     private Recipe recipe;
-    @DBRef
+    //@DBRef
     private UnitOfMeasure unitOfMeasure;
 
     public Ingredient() {  }

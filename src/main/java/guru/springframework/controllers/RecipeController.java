@@ -9,7 +9,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.ModelAndView;
 
 
 @Slf4j
@@ -47,14 +46,14 @@ public class RecipeController {
             return RECIPE_RECIPEFORM;
         }*/
 
-        RecipeCommand savedRecipeCommand = recipeService.saveRecipeCommand(command);
+        RecipeCommand savedRecipeCommand = recipeService.saveRecipeCommand(command).block();
 
         return "redirect:/recipe/show/" + savedRecipeCommand.getId();
     }
 
     @RequestMapping("/recipe/{id}/update")
     public String update(@PathVariable("id") String id, Model model){
-        model.addAttribute("recipe", recipeService.findCommandById(id));
+        model.addAttribute("recipe", recipeService.findCommandById(id).block());
 
         return RECIPE_RECIPEFORM;
 
@@ -67,7 +66,7 @@ public class RecipeController {
 
     }
 
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+   /* @ResponseStatus(HttpStatus.NOT_FOUND)
     @ExceptionHandler(NotFoundException.class)
     public ModelAndView handleNotFound(Exception ex){
         ModelAndView modelAndView = new ModelAndView("recipe/404error");
@@ -75,7 +74,7 @@ public class RecipeController {
         return modelAndView;
 
     }
-
+*/
    /* @ResponseStatus(HttpStatus.BAD_REQUEST)
     @ExceptionHandler(NumberFormatException.class)
     public ModelAndView handleNumberFormatException(Exception ex){
