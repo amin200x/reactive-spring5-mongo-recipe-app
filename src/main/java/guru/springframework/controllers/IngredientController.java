@@ -9,6 +9,7 @@ import guru.springframework.services.UnitOfMeasureService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 @Controller
 public class IngredientController {
@@ -48,7 +49,7 @@ public class IngredientController {
     @RequestMapping("/recipe/{recipeId}/ingredient/{id}/update")
     public String updateRecipeIngredient(@PathVariable("recipeId") String recipeId, @PathVariable("id") String id, Model model) {
         model.addAttribute("ingredient", ingredientService.findByRecipeIdAndId(recipeId, id));
-        model.addAttribute("umoList", unitOfMeasurService.listAllUmos().collectList().block());
+        model.addAttribute("umoList", unitOfMeasurService.listAllUmos());
 
         return "recipe/ingredient/ingredientform";
 
@@ -59,9 +60,9 @@ public class IngredientController {
         RecipeCommand recipeCommand = recipeService.findCommandById(recipeId).block();
         IngredientCommand ingredientCommand = new IngredientCommand();
         ingredientCommand.setRecipeId(recipeCommand.getId());
-        model.addAttribute("ingredient", ingredientCommand);
+        model.addAttribute("ingredient", Mono.just(ingredientCommand));
         ingredientCommand.setUnitOfMeasure(new UnitOfMeasureCommand());
-        model.addAttribute("umoList", unitOfMeasurService.listAllUmos().collectList().block());
+        model.addAttribute("umoList", unitOfMeasurService.listAllUmos());
 
         return "recipe/ingredient/ingredientform";
 

@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Mono;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class IngredientServiceImpl implements IngredientService {
@@ -35,7 +36,7 @@ public class IngredientServiceImpl implements IngredientService {
     @Override
     public Mono<IngredientCommand> saveIngredientCommand(IngredientCommand command) {
         Mono<Recipe> recipeMono = recipeRepository.findById(command.getRecipeId());
-        if (recipeMono!=null) {
+        if (recipeMono != null) {
             return Mono.just(new IngredientCommand());
         } else {
             Recipe recipe = recipeMono.block();
@@ -57,7 +58,7 @@ public class IngredientServiceImpl implements IngredientService {
                     .findFirst();
 
             //check by description
-            if(!savedIngredientOptional.isPresent()){
+            if (!savedIngredientOptional.isPresent()) {
                 //not totally safe... But best guess
                 savedIngredientOptional = savedRecipe.getIngredients().stream()
                         .filter(recipeIngredients -> recipeIngredients.getDescription().equals(command.getDescription()))
@@ -79,29 +80,35 @@ public class IngredientServiceImpl implements IngredientService {
     @Transactional
     @Override
     public Mono<Void> deleteById(String recipeId, String ingredientId) {
-       Optional<Recipe> recipe = recipeRepository.findById(recipeId).blockOptional();
-       if (recipe.isPresent()){
-          Optional<Ingredient> ingredinent= recipe.get().getIngredients().stream()
-                   .filter(ing ->ing.getId().equals(ingredientId)).findFirst();
-          if (ingredinent.isPresent()){
-              ingredinent.get().setRecipe(null);
-              recipe.get().getIngredients().remove(ingredinent.get());
-              recipeRepository.save(recipe.get());
+        Optional<Recipe> recipe = recipeRepository.findById(recipeId).blockOptional();
+        if (recipe.isPresent()) {
+            Optional<Ingredient> ingredinent = recipe.get().getIngredients().stream()
+                    .filter(ing -> ing.getId().equals(ingredientId)).findFirst();
+            if (ingredinent.isPresent()) {
+                ingredinent.get().setRecipe(null);
+                recipe.get().getIngredients().remove(ingredinent.get());
+                recipeRepository.save(recipe.get());
 
-          }
-       }
-       return Mono.empty();
+            }
+        }
+        return Mono.empty();
     }
 
     @Override
     public Mono<IngredientCommand> findByRecipeIdAndId(String recipeId, String id) {
-        Optional<IngredientCommand> ingredientCommand;
         try {
-            Optional<Recipe> recipeOptional = recipeRepository.findById(recipeId).blockOptional();
-            ingredientCommand = recipeOptional.get().getIngredients().stream()
-                    .filter(ing -> ing.getId().equals(id))
-                    .map(ing -> ingredientToIngredientCommand.convert(ing)).findFirst();
-            return Mono.just(ingredientCommand.get());
+            return recipeRepository.findById(recipeId)
+                    .map(recipe -> recipe.getIngredients()
+                            .stream()
+                            .filter(ingredient -> ingredient.getId().equals(id))
+                            .findFirst())
+                    .filter(Optional::isPresent)
+                    .map(ingredient -> {
+                        IngredientCommand ingredientCommand = ingredientToIngredientCommand.convert(ingredient.get());
+                        ingredientCommand.setRecipeId(recipeId);
+                        return ingredientCommand;
+
+                    });
 
 
         } catch (Exception e) {

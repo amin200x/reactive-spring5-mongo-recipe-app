@@ -9,6 +9,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Mono;
 
 
 @Slf4j
@@ -31,7 +32,7 @@ public class RecipeController {
 
     @RequestMapping("/recipe/new")
     public String newRecipe(Model model){
-        model.addAttribute("recipe", new RecipeCommand());
+        model.addAttribute("recipe", Mono.just(new RecipeCommand()));
 
         return RECIPE_RECIPEFORM;
     }
@@ -53,13 +54,13 @@ public class RecipeController {
 
     @RequestMapping("/recipe/{id}/update")
     public String update(@PathVariable("id") String id, Model model){
-        model.addAttribute("recipe", recipeService.findCommandById(id).block());
+        model.addAttribute("recipe", recipeService.findCommandById(id));
 
         return RECIPE_RECIPEFORM;
 
     }
     @RequestMapping("/recipe/{id}/delete")
-    public String update(@PathVariable("id") String id){
+    public String delete(@PathVariable("id") String id){
             recipeService.deleteById(id);
         return "redirect:/";
 
